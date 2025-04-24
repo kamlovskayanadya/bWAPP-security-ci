@@ -47,3 +47,33 @@ jobs:
           report-format: json
           output: gitleaks-report.json
         continue-on-error: true
+
+
+        
+  dependency-check:
+    name: Dependency Check (OWASP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download Dependency Check
+        run: |
+          curl -L -o dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
+          unzip dependency-check.zip -d dc
+          chmod +x dc/dependency-check/bin/dependency-check.sh
+
+      - name: Run Dependency Check
+        run: |
+          dc/dependency-check/bin/dependency-check.sh --project "bWAPP" --scan ./ --format HTML --out dc/reports
+
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: dc/reports
