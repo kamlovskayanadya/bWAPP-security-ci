@@ -1,0 +1,98 @@
+name: Security CI (bWAPP)
+
+on:
+  push:
+    branches:
+      - develop
+      - "feature/**"
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  sast-phpstan:
+    name: SAST (PHPStan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install Composer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          curl -sS https://getcomposer.org/installer | php
+          sudo mv composer.phar /usr/local/bin/composer
+
+      - name: Install PHPStan
+        run: composer global require phpstan/phpstan
+
+      - name: Run PHPStan
+        run: |
+          ~/.composer/vendor/bin/phpstan analyse . --level=max || true
+
+  secrets-scan:
+    name: Secrets Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          report-format: json
+          output: gitleaks-report.json
+        continue-on-error: true
+
+      - name: Upload Gitleaks Report
+        uses: actions/upload-artifact@v1
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+
+  dependency-check:
+    name: Dependency Check (OWASP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download Dependency Check
+        run: |
+          curl -L -o dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
+          unzip dependency-check.zip -d dc
+          chmod +x dc/dependency-check/bin/dependency-check.sh
+
+      - name: Run Dependency Check
+        run: |
+          dc/dependency-check/bin/dependency-check.sh --project "bWAPP" --scan ./ --format HTML --out dc/reports
+
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v1
+        with:
+          name: dependency-check-report
+          path: dc/reports
+
+
+  dast-zap:
+    name: DAST (OWASP ZAP)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: OWASP ZAP Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: "https://e1bf-5-231-41-176.ngrok-free.app"
+          fail_action: false
+          artifact_name: zap-report
