@@ -81,3 +81,18 @@ jobs:
         with:
           name: dependency-check-report
           path: dc/reports
+
+
+  dast-zap:
+    name: DAST (OWASP ZAP)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: OWASP ZAP Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: "https://e1bf-5-231-41-176.ngrok-free.app"
+          fail_action: false
+          artifact_name: zap-report
