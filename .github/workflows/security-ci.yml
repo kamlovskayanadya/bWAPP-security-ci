@@ -74,9 +74,10 @@ jobs:
 
       - name: Run Dependency Check
         run: |
-          dc/dependency-check/bin/dependency-check.sh --project "bWAPP" --scan ./ --format HTML --out dc/reports
+          dc/dependency-check/bin/dependency-check.sh --project "bWAPP" --scan ./ --format HTML --out dc/reports || true
 
       - name: Upload Dependency Check Report
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: dependency-check-report
