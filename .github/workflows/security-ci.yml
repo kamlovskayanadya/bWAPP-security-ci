@@ -77,10 +77,11 @@ jobs:
           dc/dependency-check/bin/dependency-check.sh --project "bWAPP" --scan ./ --format HTML --out dc/reports
 
       - name: Upload Dependency Check Report
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: dependency-check-report
           path: dc/reports
+
 
 
   dast-zap:
