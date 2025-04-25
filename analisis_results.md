@@ -47,5 +47,3 @@ Missing download info for actions/upload-artifact@v3
 - Отсутствие CSRF-токенов
 - Потенциальный XSS
 - Отсутствие защитных HTTP-заголовков
-
-Значимые уязвимости подтверждены вручную.
